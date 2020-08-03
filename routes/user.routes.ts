@@ -80,7 +80,7 @@ userRoutes.post('/create', async (req: Request, res: Response, next: NextFunctio
 
 });
 
-userRoutes.post('/update', verificaToken, async (req: any, res: Response, next: NextFunction) => {
+userRoutes.post('/update', verificaToken, async (req: Request, res: Response, next: NextFunction) => {
 
   res.json({
     ok: true,
