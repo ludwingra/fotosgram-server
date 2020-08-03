@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { UserModel } from "../models/user.model";
 import bcrypt from "bcrypt";
+import Token from "../classes/token";
+import { verificaToken } from "../middlewares/auth";
 
 const userRoutes = Router();
 
@@ -18,9 +20,17 @@ userRoutes.post('/login', async (req: Request, res: Response, next: NextFunction
     }
 
     if (userDB.comparePassword(body.password)) {
+
+      const token = Token.getJwtToken({
+        _id: userDB._id,
+        nombre: userDB.nombre,
+        email: userDB.email,
+        avatar: userDB.avatar
+      })
+
       res.json({
         of: true,
-        token: 'asdasd'
+        token
       })
     } else {
       res.status(500).json({
@@ -46,18 +56,36 @@ userRoutes.post('/create', async (req: Request, res: Response, next: NextFunctio
       avatar: body.avatar
     }
 
-    let rpt = await UserModel.create(user);
+    let userDB = await UserModel.create(user);
+
+    const token = Token.getJwtToken({
+      _id: userDB._id,
+      nombre: userDB.nombre,
+      email: userDB.email,
+      avatar: userDB.avatar
+    })
 
     res.status(201).json({
       ok: true,
-      user: rpt
+      user: userDB,
+      token
     });
+
   } catch (error) {
     res.status(500).json({
       ok: false,
       message: error
     });
   }
+
+});
+
+userRoutes.post('/update', verificaToken, async (req: any, res: Response, next: NextFunction) => {
+
+  res.json({
+    ok: true,
+    usuario: req.user
+  });
 
 });
 

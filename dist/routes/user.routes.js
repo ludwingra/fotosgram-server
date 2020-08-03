@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const user_model_1 = require("../models/user.model");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const token_1 = __importDefault(require("../classes/token"));
+const auth_1 = require("../middlewares/auth");
 const userRoutes = express_1.Router();
 // Login
 userRoutes.post('/login', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -28,9 +30,15 @@ userRoutes.post('/login', (req, res, next) => __awaiter(void 0, void 0, void 0, 
             });
         }
         if (userDB.comparePassword(body.password)) {
+            const token = token_1.default.getJwtToken({
+                _id: userDB._id,
+                nombre: userDB.nombre,
+                email: userDB.email,
+                avatar: userDB.avatar
+            });
             res.json({
                 of: true,
-                token: 'asdasd'
+                token
             });
         }
         else {
@@ -51,10 +59,17 @@ userRoutes.post('/create', (req, res, next) => __awaiter(void 0, void 0, void 0,
             password: bcrypt_1.default.hashSync(body.password, 10),
             avatar: body.avatar
         };
-        let rpt = yield user_model_1.UserModel.create(user);
+        let userDB = yield user_model_1.UserModel.create(user);
+        const token = token_1.default.getJwtToken({
+            _id: userDB._id,
+            nombre: userDB.nombre,
+            email: userDB.email,
+            avatar: userDB.avatar
+        });
         res.status(201).json({
             ok: true,
-            user: rpt
+            user: userDB,
+            token
         });
     }
     catch (error) {
@@ -63,5 +78,11 @@ userRoutes.post('/create', (req, res, next) => __awaiter(void 0, void 0, void 0,
             message: error
         });
     }
+}));
+userRoutes.post('/update', auth_1.verificaToken, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    res.json({
+        ok: true,
+        usuario: req.user
+    });
 }));
 exports.default = userRoutes;
