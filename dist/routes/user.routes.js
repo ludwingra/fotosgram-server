@@ -80,9 +80,33 @@ userRoutes.post('/create', (req, res, next) => __awaiter(void 0, void 0, void 0,
     }
 }));
 userRoutes.post('/update', auth_1.verificaToken, (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    res.json({
-        ok: true,
-        usuario: req.user
-    });
+    try {
+        const user = {
+            nombre: req.body.nombre || req.user.nombre,
+            email: req.body.email || req.user.email,
+            avatar: req.body.avatar || req.user.avatar
+        };
+        let userDB = yield user_model_1.UserModel.findByIdAndUpdate(req.user._id, user, { new: true });
+        if (!userDB)
+            throw { ok: false, message: 'No existe un usuario con ese ID' };
+        const token = token_1.default.getJwtToken({
+            _id: userDB._id,
+            nombre: userDB.nombre,
+            email: userDB.email,
+            avatar: userDB.avatar
+        });
+        res.status(201).json({
+            ok: true,
+            user: userDB,
+            token
+        });
+    }
+    catch (error) {
+        res.json({
+            ok: false,
+            message: error
+        });
+        console.log(error);
+    }
 }));
 exports.default = userRoutes;

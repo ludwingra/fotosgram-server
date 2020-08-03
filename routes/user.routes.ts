@@ -82,10 +82,37 @@ userRoutes.post('/create', async (req: Request, res: Response, next: NextFunctio
 
 userRoutes.post('/update', verificaToken, async (req: Request, res: Response, next: NextFunction) => {
 
-  res.json({
-    ok: true,
-    usuario: req.user
-  });
+  try {
+    const user = {
+      nombre: req.body.nombre || req.user.nombre,
+      email: req.body.email || req.user.email,
+      avatar: req.body.avatar || req.user.avatar
+    }
+
+    let userDB = await UserModel.findByIdAndUpdate(req.user._id, user, { new: true });
+
+    if (!userDB) throw { ok: false, message: 'No existe un usuario con ese ID' };
+
+    const token = Token.getJwtToken({
+      _id: userDB._id,
+      nombre: userDB.nombre,
+      email: userDB.email,
+      avatar: userDB.avatar
+    })
+
+    res.status(201).json({
+      ok: true,
+      user: userDB,
+      token
+    });
+
+  } catch (error) {
+    res.json({
+      ok: false,
+      message: error
+    })
+    console.log(error);
+  }
 
 });
 
